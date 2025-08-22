@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: leetcode-bot
+  namespace: leetcode-bot
+  labels:
+    app: leetcode-bot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: leetcode-bot
+  template:
+    metadata:
+      labels:
+        app: leetcode-bot
+    spec:
+      containers:
+      - name: leetcode-bot
+        image: leetcode-telegram-bot:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: TELEGRAM_BOT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: leetcode-bot-secret
+              key: TELEGRAM_BOT_TOKEN
+        - name: TELEGRAM_GROUP_ID
+          valueFrom:
+            secretKeyRef:
+              name: leetcode-bot-secret
+              key: TELEGRAM_GROUP_ID
+        envFrom:
+        - configMapRef:
+            name: leetcode-bot-config
+        volumeMounts:
+        - name: data-volume
+          mountPath: /data
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          exec:
+            command:
+            - test
+            - -f
+            - /data/leetcode_bot.db
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          exec:
+            command:
+            - test
+            - -f
+            - /data/leetcode_bot.db
+          initialDelaySeconds: 10
+          periodSeconds: 10
+      volumes:
+      - name: data-volume
+        persistentVolumeClaim:
+          claimName: leetcode-bot-pvc
+      restartPolicy: Always 

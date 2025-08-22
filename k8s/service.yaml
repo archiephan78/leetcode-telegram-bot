@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: leetcode-bot-service
+  namespace: leetcode-bot
+  labels:
+    app: leetcode-bot
+spec:
+  selector:
+    app: leetcode-bot
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  type: ClusterIP 

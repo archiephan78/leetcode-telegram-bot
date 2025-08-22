@@ -1,0 +1,8 @@
+[phases.build]
+cmds = ["go build -o main ."]
+
+[phases.start]
+cmd = "./main"
+
+[variables]
+CGO_ENABLED = "1" 

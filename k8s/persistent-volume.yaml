@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: leetcode-bot-pv
+  namespace: leetcode-bot
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  hostPath:
+    path: /tmp/leetcode-bot-data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: leetcode-bot-pvc
+  namespace: leetcode-bot
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: local-storage 
