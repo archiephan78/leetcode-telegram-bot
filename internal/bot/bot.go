@@ -9,6 +9,7 @@ import (
 
 	"leetcode-telegram-bot/internal/config"
 	"leetcode-telegram-bot/internal/database"
+	"leetcode-telegram-bot/internal/leetcode"
 	"leetcode-telegram-bot/internal/models"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -88,6 +89,8 @@ func (b *Bot) handleMessage(message *tgbotapi.Message) {
 			b.handleStatusCommand(message)
 		case "resetday":
 			b.handleResetDayCommand(message)
+		case "register":
+			b.handleRegisterLeetcodeProfile(message)
 		default:
 			b.sendMessage(message.Chat.ID, "Unknown command. Use /help to see available commands.")
 		}
@@ -443,5 +446,83 @@ func (b *Bot) SendReminder() error {
 	b.sendMessage(b.config.TelegramGroupID, messageText)
 
 	log.Printf("Sent reminder to %d users for Day %d", len(users), dayNumber)
+	return nil
+}
+
+func (b *Bot) CheckSubmissions() error {
+	today := time.Now().Format("2006-01-02")
+
+	// Get users who haven't submitted today
+	users, err := b.db.GetUsersWhoDidntSubmitToday(today)
+	if err != nil {
+		return fmt.Errorf("failed to get users who didn't submit: %w", err)
+	}
+
+	if len(users) == 0 {
+		log.Println("All users have submitted today!")
+		return nil
+	}
+
+	// Get today's challenge with day number
+	todaysChallenge, dayNumber, err := b.db.GetTodaysChallengeWithDay(today)
+	if err != nil {
+		return fmt.Errorf("failed to get today's challenge: %w", err)
+	}
+
+	for _, user := range users {
+		leetcodeProfile, err := b.db.GetLeetcodeProfile(user.ID)
+		if err != nil {
+			log.Printf("Error getting LeetCode profile for user %d: %v", user.ID, err)
+			continue
+		}
+
+		submissions, err := leetcode.GetRecentACByUsername(leetcodeProfile.Username)
+		done := false
+		for _, submission := range submissions {
+			if submission.Title == todaysChallenge.Title && submission.Timestamp.Format("2006-01-02") == today {
+				done = true
+				break
+			}
+		}
+
+		if done {
+			// Announce submission in group
+			var mention string
+			if user.Username != "" {
+				mention = "@" + user.Username
+			} else {
+				mention = user.FirstName
+			}
+
+			messageText := fmt.Sprintf("🎉 %s has just submitted today's challenge (Day %d):\n\n", mention, dayNumber)
+
+			b.sendMessage(b.config.TelegramGroupID, messageText)
+		}
+	}
+	return nil
+}
+
+func (b *Bot) handleRegisterLeetcodeProfile(message *tgbotapi.Message) error {
+	userID := message.From.ID
+	username := strings.TrimSpace(message.CommandArguments())
+	if username == "" {
+		b.sendMessage(message.Chat.ID, "❌ Please provide your LeetCode username. Usage: /register <leetcode_username>")
+		return nil
+	}
+
+	// Check if user is already registered
+	existingProfile, err := b.db.GetLeetcodeProfile(userID)
+	if err != nil && existingProfile != nil {
+		b.sendMessage(message.Chat.ID, "❌ You have already registered your LeetCode username.")
+		return nil
+	}
+
+	err = b.db.RegisterLeetcodeProfile(userID, username)
+	if err != nil {
+		log.Printf("Error registering LeetCode profile: %v", err)
+		b.sendMessage(message.Chat.ID, "❌ An error occurred while registering your LeetCode username.")
+		return err
+	}
+	b.sendMessage(message.Chat.ID, fmt.Sprintf("✅ Successfully registered your LeetCode username: %s", username))
 	return nil
 }

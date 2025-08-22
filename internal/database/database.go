@@ -70,6 +70,13 @@ func (db *DB) createTables() error {
 			day_number INTEGER NOT NULL,
 			FOREIGN KEY (problem_id) REFERENCES problems (id)
 		)`,
+		`CREATE TABLE IF NOT EXISTS user_leetcode_profiles (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id INTEGER NOT NULL,
+			leetcode_username TEXT NOT NULL UNIQUE,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+			FOREIGN KEY (user_id) REFERENCES users (id)
+		)`,
 		`CREATE TABLE IF NOT EXISTS challenge_counter (
 			id INTEGER PRIMARY KEY CHECK (id = 1),
 			current_day INTEGER NOT NULL DEFAULT 9,
@@ -319,4 +326,35 @@ func (db *DB) LoadProblemsFromYAML(problems models.ProblemsData) error {
 	}
 
 	return tx.Commit()
+}
+
+// GetLeetcodeProfile gets leetcode profile of user by id
+func (db *DB) GetLeetcodeProfile(id int64) (*models.User, error) {
+	query := `SELECT u.id, u.leetcode_username
+			  FROM user_leetcode_profiles u
+			  WHERE u.id = ?`
+
+	rows, err := db.conn.Query(query, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		var user models.User
+		err := rows.Scan(&user.ID, &user.Username, &user.FirstName, &user.LastName)
+		if err != nil {
+			return nil, err
+		}
+		return &user, nil
+	}
+	return nil, fmt.Errorf("no leetcode profile found for user with id %d", id)
+}
+
+// RegisterLeetcodeProfile registers a leetcode profile for a user
+func (db *DB) RegisterLeetcodeProfile(userID int64, leetcodeUsername string) error {
+	query := `INSERT OR REPLACE INTO user_leetcode_profiles (user_id, leetcode_username, created_at) 
+			  VALUES (?, ?, COALESCE((SELECT created_at FROM user_leetcode_profiles WHERE user_id = ?), CURRENT_TIMESTAMP))`
+	_, err := db.conn.Exec(query, userID, leetcodeUsername, userID)
+	return err
 }

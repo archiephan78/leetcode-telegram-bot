@@ -22,6 +22,14 @@ type User struct {
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 }
 
+// UserLeetcodeProfile represents a user's LeetCode profile
+type UserLeetcodeProfile struct {
+	ID          int64     `json:"id" db:"id"`
+	UserId		 int64     `json:"user_id" db:"user_id"`
+	LeetCodeUsername string    `json:"leetcode_username" db:"leetcode_username"`
+	CreatedAt   time.Time `json:"created_at" db:"created_at"`
+}
+
 // Submission represents a user's submission for a daily challenge
 type Submission struct {
 	ID          int       `json:"id" db:"id"`
