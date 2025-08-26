@@ -71,11 +71,11 @@ func (db *DB) createTables() error {
 			FOREIGN KEY (problem_id) REFERENCES problems (id)
 		)`,
 		`CREATE TABLE IF NOT EXISTS user_leetcode_profiles (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			user_id INTEGER NOT NULL,
-			leetcode_username TEXT NOT NULL UNIQUE,
-			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-			FOREIGN KEY (user_id) REFERENCES users (id)
+		    id INTEGER PRIMARY KEY AUTOINCREMENT,
+		    user_id INTEGER NOT NULL,
+		    leetcode_username TEXT NOT NULL UNIQUE,
+		    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		    FOREIGN KEY (user_id) REFERENCES users (id)
 		)`,
 		`CREATE TABLE IF NOT EXISTS challenge_counter (
 			id INTEGER PRIMARY KEY CHECK (id = 1),
