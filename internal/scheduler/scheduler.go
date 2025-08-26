@@ -81,6 +81,17 @@ func (s *Scheduler) Start() {
 		log.Printf("Error scheduling evening reminder: %v", err)
 	}
 
+	// Schedule check submissions every 5 minutes
+	_, err = s.cron.AddFunc("*/5 * * * *", func() {
+		log.Println("Checking new submissions...")
+		if err := s.bot.CheckSubmissions(); err != nil {
+			log.Printf("Error while checking new submissions %v", err)
+		}
+	})
+	if err != nil {
+		log.Printf("Error scheduling check new submissions: %v", err)
+	}
+
 	// Start the cron scheduler
 	s.cron.Start()
 	log.Println("Scheduler started successfully - posting challenges Monday to Friday only")
