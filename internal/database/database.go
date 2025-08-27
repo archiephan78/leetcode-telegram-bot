@@ -332,7 +332,7 @@ func (db *DB) LoadProblemsFromYAML(problems models.ProblemsData) error {
 func (db *DB) GetLeetcodeProfile(id int64) (*models.User, error) {
 	query := `SELECT u.id, u.leetcode_username
 			  FROM user_leetcode_profiles u
-			  WHERE u.id = ?`
+			  WHERE u.user_id = ?`
 
 	rows, err := db.conn.Query(query, id)
 	if err != nil {
