@@ -342,7 +342,7 @@ func (db *DB) GetLeetcodeProfile(id int64) (*models.User, error) {
 
 	if rows.Next() {
 		var user models.User
-		err := rows.Scan(&user.ID, &user.Username, &user.FirstName, &user.LastName)
+		err := rows.Scan(&user.ID, &user.Username)
 		if err != nil {
 			return nil, err
 		}

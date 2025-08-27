@@ -75,8 +75,8 @@ func (b *Bot) handleMessage(message *tgbotapi.Message) {
 	// Handle commands
 	if message.IsCommand() {
 		switch message.Command() {
-		case "submit":
-			b.handleSubmitCommand(message)
+		// case "submit":
+		// 	b.handleSubmitCommand(message)
 		case "leaderboards":
 			b.handleLeaderboardCommand(message)
 		case "help":
@@ -492,6 +492,16 @@ func (b *Bot) CheckSubmissions() error {
 				mention = "@" + user.Username
 			} else {
 				mention = user.FirstName
+			}
+			submission := &models.Submission{
+				UserID:    user.ID,
+				ProblemID: todaysChallenge.ID,
+				Date:      today,
+			}
+			err = b.db.AddSubmission(submission)
+			if err != nil {
+				log.Printf("Error adding submission for user %d: %v", user.ID, err)
+				continue
 			}
 
 			messageText := fmt.Sprintf("🎉 %s has just submitted today's challenge (Day %d):\n\n", mention, dayNumber)
